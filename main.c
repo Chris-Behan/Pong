@@ -17,12 +17,12 @@ static const int padWidth = 25.0f;
 static const int padHeight = 100.0f;
 static const int movementSpeed = 10.0f;
 static const int ballRadius = 10.0f;
-static Vector2 ballPosition = {(float)screenWidth / 2, (float)screenHeight / 2};
 
-static Vector2 player1Position;
-static Vector2 player2Position;
-static Vector2 padSize;
-static Vector2 ballDirection = {(float)2.5f, (float)0.0f};
+static Vector2 ballPosition = {(float)screenWidth / 2, (float)screenHeight / 2};
+static Vector2 player1Position = {0.0f, (float)screenHeight / 2 - padHeight / 2};
+static Vector2 player2Position = {(float)screenWidth - padWidth, (float)screenHeight / 2 - padHeight / 2};
+static Vector2 padSize = {padWidth, padHeight};
+static Vector2 ballMovement = {(float)5.0f, (float)0.0f};
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
 //------------------------------------------------------------------------------------
@@ -34,13 +34,6 @@ int main()
   // Initialization
   //--------------------------------------------------------------------------------------
   InitWindow(screenWidth, screenHeight, "pong");
-
-  ballPosition = (Vector2){(float)screenWidth / 2, (float)screenHeight / 2};
-  player1Position = (Vector2){0.0f, (float)screenHeight / 2 - padHeight / 2};
-  player2Position = (Vector2){(float)screenWidth - padWidth, (float)screenHeight / 2 - padHeight / 2};
-  padSize = (Vector2){padWidth, padHeight};
-  ballDirection = (Vector2){(float)5.0f, (float)0.0f};
-
   SetTargetFPS(60); // Set our game to run at 60 frames-per-second
   //--------------------------------------------------------------------------------------
 
@@ -60,8 +53,8 @@ int main()
 
     ClearBackground(RAYWHITE);
 
-    DrawText("move the ball with arrow keys", 10, 10, 20, DARKGRAY);
-
+    DrawText("Move with E and D", 10, 10, 20, RED);
+    DrawText("Move with I and K", 610, 10, 20, BLUE);
     DrawCircleV(ballPosition, ballRadius, BLACK);
 
     DrawRectangleV(player1Position, padSize, RED);
@@ -81,21 +74,20 @@ int main()
 
 static void handleCollision(void)
 {
-  // handle ball contact with paddle
   if (ballPosition.x - ballRadius == player1Position.x + padSize.x &&
       (ballPosition.y >= player1Position.y && ballPosition.y <= player1Position.y + padHeight))
   {
-    ballDirection.x *= -1.0f;
-    ballDirection.y *= -1.0f;
+    ballMovement.x *= -1.0f;
+    ballMovement.y *= -1.0f;
   }
   if (ballPosition.x + ballRadius == player2Position.x &&
       (ballPosition.y >= player2Position.y && ballPosition.y <= player2Position.y + padHeight))
   {
-    ballDirection.x *= -1.0f;
-    ballDirection.y *= -1.0f;
+    ballMovement.x *= -1.0f;
+    ballMovement.y *= -1.0f;
   }
-  ballPosition.x += ballDirection.x;
-  ballPosition.y += ballDirection.y;
+  ballPosition.x += ballMovement.x;
+  ballPosition.y += ballMovement.y;
 }
 
 static void handlePlayerMovement(void)
