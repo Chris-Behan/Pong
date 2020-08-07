@@ -1,15 +1,6 @@
 #include "raylib.h"
 #include <stdio.h>
 #include <math.h>
-
-//----------------------------------------------------------------------------------
-// Some Defines
-//----------------------------------------------------------------------------------
-
-//----------------------------------------------------------------------------------
-// Types and Structures Definition
-//----------------------------------------------------------------------------------
-
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
@@ -17,11 +8,10 @@ static const int screenWidth = 800;
 static const int screenHeight = 450;
 static const int padWidth = 25.0f;
 static const int padHeight = 100.0f;
-static const int movementSpeed = 10.0f;
+static const int movementSpeed = 20.0f;
 static const int ballRadius = 10.0f;
 static int player1Score = 0;
 static int player2Score = 0;
-static int gameOver = 0;
 
 static char player1ScoreStr[3];
 static char player2ScoreStr[3];
@@ -34,6 +24,7 @@ static Vector2 ballMovement = {(float)5.0f, (float)0.0f};
 
 static Sound p1Sound;
 static Sound p2Sound;
+static Sound hitSound;
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
 //------------------------------------------------------------------------------------
@@ -51,6 +42,7 @@ int main()
   SetTargetFPS(60); // Set our game to run at 60 frames-per-second
   p1Sound = LoadSound("sounds/impactPlank_medium_001.ogg");
   p2Sound = LoadSound("sounds/impactPlank_medium_002.ogg");
+  hitSound = LoadSound("sounds/impactPlate_heavy_003.ogg");
   sprintf(player1ScoreStr, "%d", player1Score);
   sprintf(player2ScoreStr, "%d", player2Score);
   //--------------------------------------------------------------------------------------
@@ -64,6 +56,7 @@ int main()
       if (IsKeyDown(KEY_SPACE))
       {
         player1Score = 0, player2Score = 0;
+        ballMovement.x = 5.0f, ballMovement.y = 0.0f;
         snprintf(player1ScoreStr, 3, "%d", player1Score);
         snprintf(player2ScoreStr, 3, "%d", player2Score);
       }
@@ -119,6 +112,7 @@ int main()
   //--------------------------------------------------------------------------------------
   UnloadSound(p1Sound);
   UnloadSound(p2Sound);
+  UnloadSound(hitSound);
   CloseAudioDevice();
   CloseWindow(); // Close window and OpenGL context
   //--------------------------------------------------------------------------------------
@@ -130,19 +124,43 @@ static void handleCollision(void)
 {
   // Player 1 collision
   if (ballPosition.x - ballRadius == player1Position.x + padSize.x &&
-      (ballPosition.y >= player1Position.y && ballPosition.y <= player1Position.y + padHeight))
+      (ballPosition.y + ballRadius >= player1Position.y && ballPosition.y - ballRadius <= player1Position.y + padHeight))
   {
     PlaySound(p1Sound);
     ballMovement.x *= -1.0f;
-    ballMovement.y *= -1.0f;
+    float midPad = player1Position.y + padSize.y / 2;
+    // Contact made to top of pad
+    if (ballPosition.y < midPad)
+    {
+      ballMovement.y = ((midPad - ballPosition.y) * -0.1f);
+      ballMovement.y = ballMovement.y < -4.0f ? ballMovement.y : -4.0f;
+    }
+    //contact made to bottom of bad
+    else
+    {
+      ballMovement.y = ((midPad - ballPosition.y) * -0.1f);
+      ballMovement.y = ballMovement.y > 4.0f ? ballMovement.y : 4.0f;
+    }
   }
   // Player 2 collision
   if (ballPosition.x + ballRadius == player2Position.x &&
-      (ballPosition.y >= player2Position.y && ballPosition.y <= player2Position.y + padHeight))
+      (ballPosition.y + ballRadius >= player2Position.y && ballPosition.y - ballRadius <= player2Position.y + padHeight))
   {
     PlaySound(p2Sound);
     ballMovement.x *= -1.0f;
-    ballMovement.y *= -1.0f;
+    float midPad = player2Position.y + padSize.y / 2;
+    // Contact made to top of pad
+    if (ballPosition.y < midPad)
+    {
+      ballMovement.y = ((midPad - ballPosition.y) * -0.1f);
+      ballMovement.y = ballMovement.y < -4.0f ? ballMovement.y : -4.0f;
+    }
+    //contact made to bottom of bad
+    else
+    {
+      ballMovement.y = ((midPad - ballPosition.y) * 0.1f);
+      ballMovement.y = ballMovement.y > 4.0f ? ballMovement.y : 4.0f;
+    }
   }
 }
 
@@ -196,7 +214,10 @@ static void handleScoring(void)
 
   if (scored)
   {
+    PlaySound(hitSound);
     ballPosition.x = (float)screenWidth / 2;
     ballPosition.y = (float)screenHeight / 2;
+    ballMovement.x *= -1.0f;
+    ballMovement.y = 0.0f;
   }
 }
