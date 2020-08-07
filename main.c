@@ -1,4 +1,6 @@
 #include "raylib.h"
+#include <stdio.h>
+#include <math.h>
 
 //----------------------------------------------------------------------------------
 // Some Defines
@@ -17,55 +19,107 @@ static const int padWidth = 25.0f;
 static const int padHeight = 100.0f;
 static const int movementSpeed = 10.0f;
 static const int ballRadius = 10.0f;
+static int player1Score = 0;
+static int player2Score = 0;
+static int gameOver = 0;
+
+static char player1ScoreStr[3];
+static char player2ScoreStr[3];
 
 static Vector2 ballPosition = {(float)screenWidth / 2, (float)screenHeight / 2};
 static Vector2 player1Position = {0.0f, (float)screenHeight / 2 - padHeight / 2};
 static Vector2 player2Position = {(float)screenWidth - padWidth, (float)screenHeight / 2 - padHeight / 2};
 static Vector2 padSize = {padWidth, padHeight};
 static Vector2 ballMovement = {(float)5.0f, (float)0.0f};
+
+static Sound p1Sound;
+static Sound p2Sound;
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
 //------------------------------------------------------------------------------------
 static void handlePlayerMovement(void);
 static void handleCollision(void);
+static void handleWallCollision(void);
+static void handleScoring(void);
 
 int main()
 {
   // Initialization
   //--------------------------------------------------------------------------------------
   InitWindow(screenWidth, screenHeight, "pong");
+  InitAudioDevice();
   SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+  p1Sound = LoadSound("sounds/impactPlank_medium_001.ogg");
+  p2Sound = LoadSound("sounds/impactPlank_medium_002.ogg");
+  sprintf(player1ScoreStr, "%d", player1Score);
+  sprintf(player2ScoreStr, "%d", player2Score);
   //--------------------------------------------------------------------------------------
 
   // Main game loop
   while (!WindowShouldClose()) // Detect window close button or ESC key
   {
-    // Update
-    //----------------------------------------------------------------------------------
-    handlePlayerMovement();
-    handleCollision();
+    if (player1Score > 2 || player2Score > 2)
+    {
+      ClearBackground(RAYWHITE);
+      if (IsKeyDown(KEY_SPACE))
+      {
+        player1Score = 0, player2Score = 0;
+        snprintf(player1ScoreStr, 3, "%d", player1Score);
+        snprintf(player2ScoreStr, 3, "%d", player2Score);
+      }
 
-    //----------------------------------------------------------------------------------
+      BeginDrawing();
+      if (player1Score > player2Score)
+      {
+        DrawText("Red wins!", 100, screenHeight / 2, 50, RED);
+      }
+      else
+      {
+        DrawText("Blue wins!", 100, screenHeight / 2, 50, BLUE);
+      }
+      DrawText("Press Space to Restart", 100, screenHeight / 2 + 60, 50, GRAY);
+      EndDrawing();
+    }
+    else
+    {
 
-    // Draw
-    //----------------------------------------------------------------------------------
-    BeginDrawing();
+      // Update
+      //----------------------------------------------------------------------------------
+      handlePlayerMovement();
+      handleCollision();
+      handleWallCollision();
+      handleScoring();
+      ballPosition.x += ballMovement.x;
+      ballPosition.y += ballMovement.y;
+      //----------------------------------------------------------------------------------
 
-    ClearBackground(RAYWHITE);
+      // Draw
+      //----------------------------------------------------------------------------------
+      BeginDrawing();
 
-    DrawText("Move with E and D", 10, 10, 20, RED);
-    DrawText("Move with I and K", 610, 10, 20, BLUE);
-    DrawCircleV(ballPosition, ballRadius, BLACK);
+      ClearBackground(RAYWHITE);
 
-    DrawRectangleV(player1Position, padSize, RED);
-    DrawRectangleV(player2Position, padSize, BLUE);
+      DrawText("Move with E and D", 10, 10, 20, RED);
+      DrawText("Move with I and K", 610, 10, 20, BLUE);
 
-    EndDrawing();
+      DrawCircleV(ballPosition, ballRadius, BLACK);
+
+      DrawRectangleV(player1Position, padSize, RED);
+      DrawRectangleV(player2Position, padSize, BLUE);
+
+      DrawText(player1ScoreStr, 50, 400, 20, RED);
+      DrawText(player2ScoreStr, 750, 400, 20, BLUE);
+
+      EndDrawing();
+    }
     //----------------------------------------------------------------------------------
   }
 
   // De-Initialization
   //--------------------------------------------------------------------------------------
+  UnloadSound(p1Sound);
+  UnloadSound(p2Sound);
+  CloseAudioDevice();
   CloseWindow(); // Close window and OpenGL context
   //--------------------------------------------------------------------------------------
 
@@ -74,24 +128,27 @@ int main()
 
 static void handleCollision(void)
 {
+  // Player 1 collision
   if (ballPosition.x - ballRadius == player1Position.x + padSize.x &&
       (ballPosition.y >= player1Position.y && ballPosition.y <= player1Position.y + padHeight))
   {
+    PlaySound(p1Sound);
     ballMovement.x *= -1.0f;
     ballMovement.y *= -1.0f;
   }
+  // Player 2 collision
   if (ballPosition.x + ballRadius == player2Position.x &&
       (ballPosition.y >= player2Position.y && ballPosition.y <= player2Position.y + padHeight))
   {
+    PlaySound(p2Sound);
     ballMovement.x *= -1.0f;
     ballMovement.y *= -1.0f;
   }
-  ballPosition.x += ballMovement.x;
-  ballPosition.y += ballMovement.y;
 }
 
 static void handlePlayerMovement(void)
 {
+  // Player 1 movement
   if (IsKeyDown(KEY_E) && player1Position.y > 0.0f)
   {
     player1Position.y -= movementSpeed;
@@ -100,7 +157,7 @@ static void handlePlayerMovement(void)
   {
     player1Position.y += movementSpeed;
   }
-
+  // Player 2 movement
   if (IsKeyDown(KEY_I) && player2Position.y > 0.0f)
   {
     player2Position.y -= movementSpeed;
@@ -108,5 +165,38 @@ static void handlePlayerMovement(void)
   if (IsKeyDown(KEY_K) && player2Position.y < screenHeight - padSize.y)
   {
     player2Position.y += movementSpeed;
+  }
+}
+
+static void handleWallCollision(void)
+{
+  if (ballPosition.y <= 0 || ballPosition.y >= screenHeight)
+  {
+    ballMovement.y *= -1.0f;
+  }
+}
+
+static void handleScoring(void)
+{
+  int scored = 0;
+  // Player2 scores
+  if (ballPosition.x <= 0)
+  {
+    scored = 1;
+    player2Score += 1;
+    snprintf(player2ScoreStr, 3, "%d", player2Score);
+  }
+  // Player 1 scores
+  if (ballPosition.x >= screenWidth)
+  {
+    scored = 1;
+    player1Score += 1;
+    snprintf(player1ScoreStr, 3, "%d", player1Score);
+  }
+
+  if (scored)
+  {
+    ballPosition.x = (float)screenWidth / 2;
+    ballPosition.y = (float)screenHeight / 2;
   }
 }
