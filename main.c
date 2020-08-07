@@ -1,15 +1,14 @@
 #include "raylib.h"
 #include <stdio.h>
 #include <math.h>
-//------------------------------------------------------------------------------------
-// Global Variables Declaration
-//------------------------------------------------------------------------------------
-const int screenWidth = 800;
-const int screenHeight = 450;
-const int padWidth = 25.0f;
-const int padHeight = 100.0f;
-const int movementSpeed = 20.0f;
-const int ballRadius = 10.0f;
+
+#define screenWidth 800
+#define screenHeight 450
+#define padWidth 25.0f
+#define padHeight 100.0f
+#define movementSpeed 20.0f
+#define ballRadius 10.0f
+
 int player1Score = 0;
 int player2Score = 0;
 
@@ -25,19 +24,31 @@ Vector2 ballMovement = {(float)5.0f, (float)0.0f};
 Sound p1Sound;
 Sound p2Sound;
 Sound hitSound;
-//------------------------------------------------------------------------------------
-// Module Functions Declaration (local)
-//------------------------------------------------------------------------------------
-void handlePlayerMovement(void);
+
+void initialize(void);
+void mainGameLoop(void);
+void unInitialize(void);
+void handleScoreBoard(void);
+void handleGameplay(void);
+void updateGame(void);
+void drawGame(void);
+
 void handleCollision(void);
+void collisionHelper(Vector2 *);
+void handlePlayerMovement(void);
 void handleWallCollision(void);
 void handleScoring(void);
-void collisionHelper(Vector2 *);
 
 int main()
 {
-  // Initialization
-  //--------------------------------------------------------------------------------------
+  initialize();
+  mainGameLoop();
+  unInitialize();
+  return 0;
+}
+
+void initialize(void)
+{
   InitWindow(screenWidth, screenHeight, "pong");
   InitAudioDevice();
   SetTargetFPS(60); // Set our game to run at 60 frames-per-second
@@ -46,70 +57,83 @@ int main()
   hitSound = LoadSound("sounds/impactPlate_heavy_003.ogg");
   sprintf(player1ScoreStr, "%d", player1Score);
   sprintf(player2ScoreStr, "%d", player2Score);
-  //--------------------------------------------------------------------------------------
-  // Main game loop
+}
+
+void mainGameLoop(void)
+{
   while (!WindowShouldClose()) // Detect window close button or ESC key
   {
     if (player1Score > 2 || player2Score > 2)
     {
-      ClearBackground(RAYWHITE);
-      if (IsKeyDown(KEY_SPACE))
-      {
-        player1Score = 0, player2Score = 0;
-        ballMovement.x = 5.0f, ballMovement.y = 0.0f;
-        snprintf(player1ScoreStr, 3, "%d", player1Score);
-        snprintf(player2ScoreStr, 3, "%d", player2Score);
-      }
-      BeginDrawing();
-      if (player1Score > player2Score)
-      {
-        DrawText("Red wins!", 100, screenHeight / 2, 50, RED);
-      }
-      else
-      {
-        DrawText("Blue wins!", 100, screenHeight / 2, 50, BLUE);
-      }
-      DrawText("Press Space to Restart", 100, screenHeight / 2 + 60, 50, GRAY);
-      EndDrawing();
+      handleScoreBoard();
     }
     else
     {
-      // Update
-      //----------------------------------------------------------------------------------
-      handlePlayerMovement();
-      handleCollision();
-      handleWallCollision();
-      handleScoring();
-      ballPosition.x += ballMovement.x;
-      ballPosition.y += ballMovement.y;
-      //----------------------------------------------------------------------------------
-      // Draw
-      //----------------------------------------------------------------------------------
-      BeginDrawing();
-      ClearBackground(RAYWHITE);
-      DrawText("Move with E and D", 10, 10, 20, RED);
-      DrawText("Move with I and K", 610, 10, 20, BLUE);
-      DrawCircleV(ballPosition, ballRadius, BLACK);
-      DrawRectangleV(player1Position, padSize, RED);
-      DrawRectangleV(player2Position, padSize, BLUE);
-      DrawText(player1ScoreStr, 50, 400, 20, RED);
-      DrawText(player2ScoreStr, 750, 400, 20, BLUE);
-
-      EndDrawing();
+      handleGameplay();
     }
-    //----------------------------------------------------------------------------------
   }
+}
 
-  // De-Initialization
-  //--------------------------------------------------------------------------------------
+void unInitialize(void)
+{
   UnloadSound(p1Sound);
   UnloadSound(p2Sound);
   UnloadSound(hitSound);
   CloseAudioDevice();
   CloseWindow(); // Close window and OpenGL context
-  //--------------------------------------------------------------------------------------
+}
 
-  return 0;
+void handleScoreBoard(void)
+{
+  ClearBackground(RAYWHITE);
+  if (IsKeyDown(KEY_SPACE))
+  {
+    player1Score = 0, player2Score = 0;
+    ballMovement.x = 5.0f, ballMovement.y = 0.0f;
+    snprintf(player1ScoreStr, 3, "%d", player1Score);
+    snprintf(player2ScoreStr, 3, "%d", player2Score);
+  }
+  BeginDrawing();
+  if (player1Score > player2Score)
+  {
+    DrawText("Red wins!", 100, screenHeight / 2, 50, RED);
+  }
+  else
+  {
+    DrawText("Blue wins!", 100, screenHeight / 2, 50, BLUE);
+  }
+  DrawText("Press Space to Restart", 100, screenHeight / 2 + 60, 50, GRAY);
+  EndDrawing();
+}
+
+void handleGameplay(void)
+{
+  updateGame();
+  drawGame();
+}
+
+void updateGame(void)
+{
+  handlePlayerMovement();
+  handleCollision();
+  handleWallCollision();
+  handleScoring();
+  ballPosition.x += ballMovement.x;
+  ballPosition.y += ballMovement.y;
+}
+
+void drawGame(void)
+{
+  BeginDrawing();
+  ClearBackground(RAYWHITE);
+  DrawText("Move with E and D", 10, 10, 20, RED);
+  DrawText("Move with I and K", 610, 10, 20, BLUE);
+  DrawCircleV(ballPosition, ballRadius, BLACK);
+  DrawRectangleV(player1Position, padSize, RED);
+  DrawRectangleV(player2Position, padSize, BLUE);
+  DrawText(player1ScoreStr, 50, 400, 20, RED);
+  DrawText(player2ScoreStr, 750, 400, 20, BLUE);
+  EndDrawing();
 }
 
 void handleCollision(void)
