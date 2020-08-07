@@ -28,10 +28,11 @@ static Sound hitSound;
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
 //------------------------------------------------------------------------------------
-static void handlePlayerMovement(void);
-static void handleCollision(void);
-static void handleWallCollision(void);
-static void handleScoring(void);
+void handlePlayerMovement(void);
+void handleCollision(void);
+void handleWallCollision(void);
+void handleScoring(void);
+void collisionHelper(Vector2 *);
 
 int main()
 {
@@ -46,7 +47,6 @@ int main()
   sprintf(player1ScoreStr, "%d", player1Score);
   sprintf(player2ScoreStr, "%d", player2Score);
   //--------------------------------------------------------------------------------------
-
   // Main game loop
   while (!WindowShouldClose()) // Detect window close button or ESC key
   {
@@ -60,7 +60,6 @@ int main()
         snprintf(player1ScoreStr, 3, "%d", player1Score);
         snprintf(player2ScoreStr, 3, "%d", player2Score);
       }
-
       BeginDrawing();
       if (player1Score > player2Score)
       {
@@ -75,7 +74,6 @@ int main()
     }
     else
     {
-
       // Update
       //----------------------------------------------------------------------------------
       handlePlayerMovement();
@@ -85,21 +83,15 @@ int main()
       ballPosition.x += ballMovement.x;
       ballPosition.y += ballMovement.y;
       //----------------------------------------------------------------------------------
-
       // Draw
       //----------------------------------------------------------------------------------
       BeginDrawing();
-
       ClearBackground(RAYWHITE);
-
       DrawText("Move with E and D", 10, 10, 20, RED);
       DrawText("Move with I and K", 610, 10, 20, BLUE);
-
       DrawCircleV(ballPosition, ballRadius, BLACK);
-
       DrawRectangleV(player1Position, padSize, RED);
       DrawRectangleV(player2Position, padSize, BLUE);
-
       DrawText(player1ScoreStr, 50, 400, 20, RED);
       DrawText(player2ScoreStr, 750, 400, 20, BLUE);
 
@@ -120,51 +112,43 @@ int main()
   return 0;
 }
 
-static void handleCollision(void)
+void handleCollision(void)
 {
   // Player 1 collision
   if (ballPosition.x - ballRadius == player1Position.x + padSize.x &&
       (ballPosition.y + ballRadius >= player1Position.y && ballPosition.y - ballRadius <= player1Position.y + padHeight))
   {
     PlaySound(p1Sound);
-    ballMovement.x *= -1.0f;
-    float midPad = player1Position.y + padSize.y / 2;
-    // Contact made to top of pad
-    if (ballPosition.y < midPad)
-    {
-      ballMovement.y = ((midPad - ballPosition.y) * -0.1f);
-      ballMovement.y = ballMovement.y < -4.0f ? ballMovement.y : -4.0f;
-    }
-    //contact made to bottom of bad
-    else
-    {
-      ballMovement.y = ((midPad - ballPosition.y) * -0.1f);
-      ballMovement.y = ballMovement.y > 4.0f ? ballMovement.y : 4.0f;
-    }
+    collisionHelper(&player1Position);
   }
   // Player 2 collision
   if (ballPosition.x + ballRadius == player2Position.x &&
       (ballPosition.y + ballRadius >= player2Position.y && ballPosition.y - ballRadius <= player2Position.y + padHeight))
   {
     PlaySound(p2Sound);
-    ballMovement.x *= -1.0f;
-    float midPad = player2Position.y + padSize.y / 2;
-    // Contact made to top of pad
-    if (ballPosition.y < midPad)
-    {
-      ballMovement.y = ((midPad - ballPosition.y) * -0.1f);
-      ballMovement.y = ballMovement.y < -4.0f ? ballMovement.y : -4.0f;
-    }
-    //contact made to bottom of bad
-    else
-    {
-      ballMovement.y = ((midPad - ballPosition.y) * 0.1f);
-      ballMovement.y = ballMovement.y > 4.0f ? ballMovement.y : 4.0f;
-    }
+    collisionHelper(&player2Position);
   }
 }
 
-static void handlePlayerMovement(void)
+void collisionHelper(Vector2 *playerPosition)
+{
+  ballMovement.x *= -1.0f;
+  float midPad = playerPosition->y + padSize.y / 2;
+  // Contact made to top of pad
+  if (ballPosition.y < midPad)
+  {
+    ballMovement.y = (fabs(midPad - ballPosition.y) * -0.1f);
+    ballMovement.y = ballMovement.y < -4.0f ? ballMovement.y : -4.0f;
+  }
+  //contact made to bottom of pad
+  else
+  {
+    ballMovement.y = (fabs(midPad - ballPosition.y) * 0.1f);
+    ballMovement.y = ballMovement.y > 4.0f ? ballMovement.y : 4.0f;
+  }
+}
+
+void handlePlayerMovement(void)
 {
   // Player 1 movement
   if (IsKeyDown(KEY_E) && player1Position.y > 0.0f)
@@ -186,7 +170,7 @@ static void handlePlayerMovement(void)
   }
 }
 
-static void handleWallCollision(void)
+void handleWallCollision(void)
 {
   if (ballPosition.y <= 0 || ballPosition.y >= screenHeight)
   {
@@ -194,7 +178,7 @@ static void handleWallCollision(void)
   }
 }
 
-static void handleScoring(void)
+void handleScoring(void)
 {
   int scored = 0;
   // Player2 scores
