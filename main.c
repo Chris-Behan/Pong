@@ -4,27 +4,27 @@
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
-static const int screenWidth = 800;
-static const int screenHeight = 450;
-static const int padWidth = 25.0f;
-static const int padHeight = 100.0f;
-static const int movementSpeed = 20.0f;
-static const int ballRadius = 10.0f;
-static int player1Score = 0;
-static int player2Score = 0;
+const int screenWidth = 800;
+const int screenHeight = 450;
+const int padWidth = 25.0f;
+const int padHeight = 100.0f;
+const int movementSpeed = 20.0f;
+const int ballRadius = 10.0f;
+int player1Score = 0;
+int player2Score = 0;
 
-static char player1ScoreStr[3];
-static char player2ScoreStr[3];
+char player1ScoreStr[3];
+char player2ScoreStr[3];
 
-static Vector2 ballPosition = {(float)screenWidth / 2, (float)screenHeight / 2};
-static Vector2 player1Position = {0.0f, (float)screenHeight / 2 - padHeight / 2};
-static Vector2 player2Position = {(float)screenWidth - padWidth, (float)screenHeight / 2 - padHeight / 2};
-static Vector2 padSize = {padWidth, padHeight};
-static Vector2 ballMovement = {(float)5.0f, (float)0.0f};
+Vector2 ballPosition = {(float)screenWidth / 2, (float)screenHeight / 2};
+Vector2 player1Position = {0.0f, (float)screenHeight / 2 - padHeight / 2};
+Vector2 player2Position = {(float)screenWidth - padWidth, (float)screenHeight / 2 - padHeight / 2};
+Vector2 padSize = {padWidth, padHeight};
+Vector2 ballMovement = {(float)5.0f, (float)0.0f};
 
-static Sound p1Sound;
-static Sound p2Sound;
-static Sound hitSound;
+Sound p1Sound;
+Sound p2Sound;
+Sound hitSound;
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
 //------------------------------------------------------------------------------------
